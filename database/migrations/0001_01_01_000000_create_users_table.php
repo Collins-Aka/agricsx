@@ -11,6 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('company_id')->nullable();
+            $table->string('currency_name');
+            $table->string('currency_symbol')->nullable();
+            $table->string('currency_code');
+            $table->double('exchange_rate')->nullable();
+            $table->enum('is_cryptocurrency', ['yes', 'no'])->default('no');
+            $table->double('usd_price')->nullable();
+            $table->timestamps();
+        });
 
         Schema::create('regions', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -35,7 +46,7 @@ return new class extends Migration
             $table->foreign('region_id')->references('id')->on('regions')->onDelete('cascade')->onUpdate('cascade');
         });
 
-        Schema::create('countries', function (Blueprint $table){
+        Schema::create('countries', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name', 100);
             $table->char('iso3', 3)->nullable();
@@ -71,7 +82,7 @@ return new class extends Migration
         Schema::create('states', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name', 255);
-            $table->foreigUuid('country_id')->nullable()->index();
+            $table->foreignUuid('country_id')->nullable()->index();
             $table->char('country_code', 2);
             $table->string('fips_code')->nullable();
             $table->string('iso2')->nullable();
@@ -110,6 +121,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone_number')->unique();
             $table->string('pin')->nullable();
+            $table->enum('gender', ['male', 'female', 'others'])->nullable();
+            $table->foreignUuid('country_id')->nullable()->index();
+            $table->foreignUuid('state_id')->nullable()->index();
+            $table->foreignUuid('city_id')->nullable()->index();
             $table->string('password');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('address')->nullable();
@@ -121,8 +136,13 @@ return new class extends Migration
             $table->integer('enable_login')->default(1);
             $table->rememberToken();
             $table->timestamps();
+            $table->timestamp('last_login')->nullable();
             $table->index('email');
             $table->index('phone_number');
+
+            $table->foreign('country_id')->references('id')->on('countries')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('state_id')->references('id')->on('states')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade')->onUpdate('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -146,6 +166,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('currencies');
         Schema::dropIfExists('regions');
         Schema::dropIfExists('subregions');
         Schema::dropIfExists('countries');
